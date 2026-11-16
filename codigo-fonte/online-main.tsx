@@ -1,0 +1,17 @@
+import React,{useEffect,useState} from 'react';
+import {createRoot} from 'react-dom/client';
+import Home from './app/page';import {BrandMark} from './app/brand';
+import {createOnlineSession} from './server/online-session.mjs';
+import './app/globals.css';import './local.css';import './online.css';
+// Este ponto de entrada é independente do modo local e nunca instala o seu adaptador.
+(window as any).__WORKTOYOU_ONLINE__=true;
+const api=createOnlineSession();
+function App(){const [user,U]=useState<any>(null),[loading,L]=useState(true),[mode,M]=useState<'login'|'signup'>('login'),[email,E]=useState(''),[password,P]=useState(''),[confirmation,C]=useState(''),[error,X]=useState(''),[busy,B]=useState(false);
+ useEffect(()=>{api.current().then(v=>U(v.user)).catch(()=>U(null)).finally(()=>L(false));const out=()=>{api.logout().then(()=>{U(null);P('')}).catch((e:any)=>X(e.message))};window.addEventListener('wt-logout',out);return()=>window.removeEventListener('wt-logout',out)},[]);
+ async function submit(e:any){e.preventDefault();X('');B(true);try{if(mode==='signup'){if(password!==confirmation)throw Error('As palavras-passe não coincidem.');await api.register(email,password)}const result=await api.login(email,password);U(result.user);P('');C('')}catch(e:any){X(e.message||'Não foi possível entrar.')}finally{B(false)}}
+ if(loading)return <div className="online-loading">A iniciar WorkToyou…</div>;
+ if(user&&user.role==='provider')return <><div className="online-notice">Área online em desenvolvimento — não utilizar com dados reais.</div><Home key={user.id}/></>;
+ if(user)return <main className="online-loading"><h1>Administração online</h1><p>O painel de administração ainda está em desenvolvimento.</p><button onClick={()=>window.dispatchEvent(new Event('wt-logout'))}>Sair</button>{error&&<p role="alert">{error}</p>}</main>;
+ return <div className="wt-entry"><div className="wt-shade"/><div className="wt-entry-grid"><div className="wt-copy"><div className="wt-hero-brand"><BrandMark size={46}/><b>Work<span>Toyou</span></b></div><p>● &nbsp; O SEU TRABALHO, MAIS ORGANIZADO</p><h1>O seu negócio.<br/><em>Num só lugar.</em></h1><div>Organize serviços, clientes e orçamentos com mais clareza.</div></div><div className="wt-card online-form"><div className="wt-card-brand"><BrandMark size={55}/><b>Work<span>Toyou</span></b></div><small>ACESSO À PLATAFORMA</small><h2>{mode==='login'?'Entrar na sua conta':'Criar conta de prestador'}</h2><p>{mode==='login'?'Introduza os seus dados de acesso.':'Utilize uma palavra-passe com pelo menos 12 caracteres.'}</p><form onSubmit={submit}><label>Email<input type="email" required autoComplete="email" value={email} onChange={e=>E(e.target.value)}/></label><label>Palavra-passe<input type="password" required autoComplete={mode==='login'?'current-password':'new-password'} value={password} onChange={e=>P(e.target.value)}/></label>{mode==='signup'&&<label>Confirmar palavra-passe<input type="password" required autoComplete="new-password" value={confirmation} onChange={e=>C(e.target.value)}/></label>}{error&&<div className="wt-error" role="alert">{error}</div>}<button className="wt-primary" disabled={busy}>{busy?'A processar…':mode==='login'?'Entrar':'Criar conta e entrar'}</button></form><button className="wt-switch" onClick={()=>{M(mode==='login'?'signup':'login');X('')}}>{mode==='login'?'Criar conta de prestador':'Já tenho conta'}</button><p className="wt-local">Versão online em desenvolvimento.</p></div></div></div>
+}
+createRoot(document.getElementById('root')!).render(<App/>);
