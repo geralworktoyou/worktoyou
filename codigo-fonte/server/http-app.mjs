@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'node:path';
 import helmet from 'helmet';
 import multer from 'multer';
 import {rateLimit} from 'express-rate-limit';
@@ -7,7 +8,7 @@ import {AccessError} from './tenant-access.mjs';
 import {validateInvoiceLinks} from './financial.mjs';
 
 /** API experimental: deve ser executada apenas atrás de HTTPS e com proxy confiável. */
-export function makeApp({auth,records,companies,media,stock,payments,origin,secureCookies=true}) {
+export function makeApp({auth,records,companies,media,stock,payments,origin,secureCookies=true,experimentalWebRoot}) {
  if(!auth||!origin)throw new Error('Configuração de autenticação e origem é obrigatória.');
  const app=express();app.disable('x-powered-by');app.set('trust proxy',1);
  app.use(helmet({contentSecurityPolicy:{directives:{imgSrc:["'self'",'data:','https://res.cloudinary.com','https://api.cloudinary.com']}}}));app.use(express.json({limit:'32kb'}));
@@ -39,6 +40,7 @@ export function makeApp({auth,records,companies,media,stock,payments,origin,secu
   app.get(path,principal,async(req,res,next)=>{try{if(!media)return res.status(503).send('Ficheiros indisponíveis.');const url=await media.downloadLink(req.user,undefined,req.query.id);res.set('Cache-Control','no-store');res.redirect(302,url)}catch(e){next(e)}});
   app.delete(path,checkOrigin,principal,async(req,res,next)=>{try{if(!media)return res.status(503).send('Ficheiros indisponíveis.');res.json(await media.remove(req.user,undefined,req.body?.id))}catch(e){next(e)}});
  }
+ if(experimentalWebRoot){const root=path.resolve(experimentalWebRoot);app.use((_req,res,next)=>{res.set('X-Robots-Tag','noindex, nofollow');next()});app.get('/',(_req,res)=>res.sendFile(path.join(root,'online.html')));app.use(express.static(root,{index:false,fallthrough:true}));}
  app.use((err,_req,res,_next)=>{if(err instanceof AuthError||err instanceof AccessError)return res.status(err.status).json({error:err.message});if(err instanceof TypeError)return res.status(400).json({error:err.message});res.status(500).json({error:'Não foi possível completar o pedido.'})});
  return app;
 }
