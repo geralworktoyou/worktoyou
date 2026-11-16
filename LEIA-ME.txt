@@ -1,0 +1,89 @@
+WORKTOYOU — PROJETO PARA TESTES LOCAIS
+======================================
+
+1. COMEÇAR
+Extraia todos os ficheiros do ZIP para uma pasta no computador.
+
+A forma mais rápida é abrir WorkToyou_Local.html no Chrome ou Edge. Para usar
+um endereço local estável, instale Node.js 22 ou superior e:
+• Windows: faça duplo clique em Iniciar_Windows.cmd. Se o navegador abrir antes
+  do servidor estar pronto, atualize a página.
+• macOS/Linux: execute ./Iniciar_macOS_Linux.sh no terminal e abra
+  http://127.0.0.1:4173.
+Mantenha a janela do servidor aberta enquanto utilizar a aplicação. Para parar,
+prima Ctrl+C. A aplicação funciona sem internet depois de extraída.
+
+Entrada de administrador para testes:
+  Email: admin@gmail.com
+  Palavra-passe: admin
+
+Na página de entrada pode criar uma conta de prestador. Cada conta recebe três
+ocorrências fictícias. No painel de administrador pode abrir cada empresa.
+
+2. DADOS E CÓPIA JSON
+Os dados são guardados no navegador do mesmo computador. Separadores privados,
+limpeza dos dados do navegador, mudança de navegador, computador ou endereço
+(file:// em vez de http://127.0.0.1:4173, ou outra porta) podem apresentar um
+conjunto diferente ou vazio. Antes de mudar, exporte e depois importe a cópia.
+
+Entre como administrador e escolha «Guardar tudo em JSON»: obtém um ficheiro
+com contas, registos e anexos. A exportação é manual, por isso repita-a sempre
+que quiser atualizar a cópia. Guarde-a num local seguro: contém dados privados
+e informações de acesso. Não edite nem partilhe o JSON sem necessidade.
+Para recuperar, use «Importar ficheiro JSON» na entrada. A importação substitui
+os dados existentes nesse navegador; faça uma cópia antes de importar.
+
+3. O QUE ESTÁ INCLUÍDO
+Aplicação local e respetivo código-fonte: entrada, contas locais, área de
+administração, gestão por empresa, ocorrências, agenda, clientes, orçamentos,
+faturas registadas, pagamentos, stock, relatórios e definições. A impressão do
+orçamento usa a opção de impressão do navegador, onde pode escolher «Guardar
+como PDF». As faturas são registos internos de faturas emitidas externamente;
+o programa não emite faturas certificadas.
+
+A caixa de mensagens é um espaço ainda não ligado ao site ou ao WhatsApp.
+A leitura/importação automática de ocorrências a partir de PDF não está pronta.
+A cópia local permite testar, mas não foi verificada em todos os navegadores
+nem com todos os fluxos e ficheiros: confirme os resultados antes de os usar.
+
+ORÇAMENTOS E STOCK
+Nos orçamentos adicione produtos existentes e linhas de serviço ou deslocação.
+O subtotal é calculado pelas linhas; o IVA mantém-se definido no orçamento.
+Para descontar materiais, defina o estado como Aprovado, guarde e volte a abrir
+o orçamento. Use «Descontar do stock». O botão «Repor stock» desfaz o desconto
+antes de alterar as linhas ou eliminar o orçamento. O stock não é descontado
+automaticamente: confirme as quantidades antes de utilizar o botão.
+
+4. CÓDIGO-FONTE
+A pasta codigo-fonte contém a aplicação React/Vite e testes locais. Para editar:
+  cd codigo-fonte
+  npm install
+  npm test
+  npm run dev
+A construção é feita com npm run build; produz codigo-fonte/dist. A compilação
+não atualiza automaticamente WorkToyou_Local.html: esse ficheiro é uma versão
+independente para testar. Node 22.13 ou superior é necessário para o Vite 8.
+
+5. PUBLICAÇÃO FUTURA NO RENDER / MONGODB / CLOUDINARY / CLOUDFLARE
+ESTA VERSÃO NÃO ESTÁ PRONTA PARA PUBLICAÇÃO PÚBLICA. É local, não tem servidor
+de autenticação, MongoDB nem integração Cloudinary. A conta admin/admin e o
+armazenamento no navegador não protegem dados de utilizadores reais.
+
+Antes de publicar será necessário desenvolver e testar um servidor seguro,
+contas e sessões reais, isolamento entre empresas e permissões de administrador,
+ligar os dados ao MongoDB, carregar anexos para Cloudinary ou outro armazenamento
+adequado, definir backups e recuperação, gerir segredos como variáveis de
+ambiente e configurar o serviço no Render. Em seguida, configurar o domínio/DNS
+e HTTPS no Cloudflare conforme a implementação. Nenhuma credencial de produção
+é fornecida ou necessária neste pacote. O acesso ao MongoDB e ao Cloudinary terá
+de ser configurado mais tarde. O administrador deve usar palavra-passe forte.
+
+6. AJUDA
+Se uma conta local já tiver sido criada, use «Entrar» com o email e palavra-passe
+definidos. Se surgir erro, anote a mensagem e o navegador utilizado para facilitar
+a correção. Não envie palavras-passe nem cópias JSON com dados reais por chat.
+
+7. ÍCONES PARA TELEMÓVEL E TABLET
+Os ícones e o manifest estão preparados na pasta codigo-fonte/public.
+A instalação depende do navegador, de HTTPS (ou localhost) e dos requisitos
+de cada plataforma; deve ser verificada após publicar a aplicação.

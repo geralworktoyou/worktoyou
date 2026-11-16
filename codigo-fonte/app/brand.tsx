@@ -1,0 +1,8 @@
+export function BrandMark({size=42}:{size?:number}){return <svg width={size} height={size} viewBox="0 0 48 48" role="img" aria-label="Logótipo WorkToyou"><rect x="1" y="1" width="46" height="46" rx="13" fill="#cde766"/><path d="M10 15.5l5.2 18 5.2-10.8 4.1 10.8 5.4-18" fill="none" stroke="#173c3d" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/><path d="M33 15.5h5M35.5 13v5" fill="none" stroke="#4a7860" strokeWidth="2.5" strokeLinecap="round"/></svg>}
+export type Company={nome?:string,nif?:string,morada?:string,codigoPostal?:string,localidade?:string,telefone?:string,email?:string,website?:string,logoKey?:string};
+export function CompanyIdentity({company,className=''}:{company:Company,className?:string}){const address=[company.morada,[company.codigoPostal,company.localidade].filter(Boolean).join(' ')].filter(Boolean).join(' · ');const contact=[company.telefone,company.email,company.website].filter(Boolean).join(' · ');return <div className={'company-identity '+className}>{company.logoKey&&<img src={company.logoKey} alt="Logótipo da empresa"/>}<div><strong>{company.nome||'Empresa'}</strong>{company.nif&&<small>NIF: {company.nif}</small>}{address&&<small>{address}</small>}{contact&&<small>{contact}</small>}</div></div>}
+export async function printCompanyDocument(selector:string){
+ const img=document.querySelector<HTMLImageElement>(selector+' .company-identity img');
+ if(img){try{await Promise.race([img.decode(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),5000))])}catch{alert('Não foi possível carregar o logótipo. Verifique a ligação e tente novamente.');return false}}
+ window.print();return true;
+}
