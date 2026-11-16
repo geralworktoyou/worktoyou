@@ -11,7 +11,8 @@
     "build": "vite build --config vite.local.config.mjs",
     "test": "node test-local.mjs && node test-backup.mjs && node test-stock.mjs",
     "start:api": "node server/start.mjs",
-    "test:server": "node --test server/*.test.mjs"
+    "test:server": "node --test server/*.test.mjs",
+    "build:online": "vite build --config vite.online.config.mjs"
   },
   "dependencies": {
     "cloudinary": "^2.11.0",
