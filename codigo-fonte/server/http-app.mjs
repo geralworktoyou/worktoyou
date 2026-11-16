@@ -1,11 +1,12 @@
 import express from 'express';
 import helmet from 'helmet';
+import multer from 'multer';
 import {rateLimit} from 'express-rate-limit';
 import {AuthError} from './auth.mjs';
 import {AccessError} from './tenant-access.mjs';
 
 /** API experimental: deve ser executada apenas atrás de HTTPS e com proxy confiável. */
-export function makeApp({auth,records,origin,secureCookies=true}) {
+export function makeApp({auth,records,media,origin,secureCookies=true}) {
  if(!auth||!origin)throw new Error('Configuração de autenticação e origem é obrigatória.');
  const app=express();app.disable('x-powered-by');app.set('trust proxy',1);
  app.use(helmet());app.use(express.json({limit:'32kb'}));
@@ -19,9 +20,15 @@ export function makeApp({auth,records,origin,secureCookies=true}) {
  app.get('/api/auth/me',async(req,res,next)=>{try{res.json({user:await auth.authenticate(token(req))})}catch(e){next(e)}});
  app.post('/api/auth/logout',checkOrigin,async(req,res,next)=>{try{await auth.logout(token(req));res.clearCookie('wt_session',options);res.status(204).end()}catch(e){next(e)}});
  async function principal(req,res,next){try{req.user=await auth.authenticate(token(req));next()}catch(e){next(e)}}
- app.get('/api/records',principal,async(req,res,next)=>{try{if(!records)return res.status(503).json({error:'Registos indisponíveis.'});const rows=await records.list(req.user,undefined);res.json(rows.map(({id,kind,data,created})=>({id,kind,data:JSON.stringify(data),created})))}catch(e){next(e)}});
+ app.get('/api/records',principal,async(req,res,next)=>{try{if(!records)return res.status(503).json({error:'Registos indisponíveis.'});const rows=await records.list(req.user,undefined);const assets=media?await media.list(req.user,undefined):[];const files=assets.map(a=>({id:a.id,kind:a.parentType==='faturas'?'fatura_pdf':'fotos',data:{[a.parentType==='faturas'?'faturaId':'ocorrenciaId']:a.parentId,nome:a.nome,localUrl:(a.parentType==='faturas'?'/api/invoice-pdfs?id=':'/api/photos?id=')+encodeURIComponent(a.id)},created:a.created}));res.json([...rows,...files].map(({id,kind,data,created})=>({id,kind,data:JSON.stringify(data),created})))}catch(e){next(e)}});
  // Apenas clientes nesta fase: restantes registos aguardam validação das regras de negócio.
  app.post('/api/records',checkOrigin,principal,async(req,res,next)=>{try{if(!records)return res.status(503).json({error:'Registos indisponíveis.'});const {id,kind,data}=req.body||{};if(kind!=='clientes')return res.status(501).json({error:'Este módulo ainda não está disponível online.'});const result=id?await records.update(req.user,undefined,id,kind,data):await records.create(req.user,undefined,kind,data);res.json({id:result.id})}catch(e){next(e)}});
+ const upload=multer({storage:multer.memoryStorage(),limits:{fileSize:12*1024*1024,files:1,fields:4}});
+ for(const [path,parentType,parentKey] of [['/api/photos','ocorrencias','ocorrenciaId'],['/api/invoice-pdfs','faturas','faturaId']]){
+  app.post(path,checkOrigin,principal,upload.single('ficheiro'),async(req,res,next)=>{try{if(!media)return res.status(503).send('Ficheiros indisponíveis.');const result=await media.upload(req.user,undefined,{buffer:req.file?.buffer,parentType,parentId:req.body?.[parentKey],name:req.file?.originalname});res.json(result)}catch(e){next(e)}});
+  app.get(path,principal,async(req,res,next)=>{try{if(!media)return res.status(503).send('Ficheiros indisponíveis.');const url=await media.downloadLink(req.user,undefined,req.query.id);res.set('Cache-Control','no-store');res.redirect(302,url)}catch(e){next(e)}});
+  app.delete(path,checkOrigin,principal,async(req,res,next)=>{try{if(!media)return res.status(503).send('Ficheiros indisponíveis.');res.json(await media.remove(req.user,undefined,req.body?.id))}catch(e){next(e)}});
+ }
  app.use((err,_req,res,_next)=>{if(err instanceof AuthError||err instanceof AccessError)return res.status(err.status).json({error:err.message});if(err instanceof TypeError)return res.status(400).json({error:err.message});res.status(500).json({error:'Não foi possível completar o pedido.'})});
  return app;
 }
