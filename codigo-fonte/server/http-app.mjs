@@ -22,6 +22,7 @@ export function makeApp({auth,records,companies,media,stock,payments,origin,secu
  app.get('/api/auth/me',async(req,res,next)=>{try{res.json({user:await auth.authenticate(token(req))})}catch(e){next(e)}});
  app.post('/api/auth/logout',checkOrigin,async(req,res,next)=>{try{await auth.logout(token(req));res.clearCookie('wt_session',options);res.status(204).end()}catch(e){next(e)}});
  async function principal(req,res,next){try{req.user=await auth.authenticate(token(req));next()}catch(e){next(e)}}
+ app.post('/api/auth/change-password',limiter,checkOrigin,principal,async(req,res,next)=>{try{await auth.changePassword(req.user,req.body?.currentPassword,req.body?.newPassword);res.clearCookie('wt_session',options);res.json({ok:true})}catch(e){next(e)}});
  app.get('/api/admin/providers',principal,async(req,res,next)=>{try{res.json(await auth.listProviders(req.user))}catch(e){next(e)}});
  app.post('/api/admin/providers/status',checkOrigin,principal,async(req,res,next)=>{try{res.json(await auth.setProviderDisabled(req.user,req.body?.id,req.body?.disabled))}catch(e){next(e)}});
  app.get('/api/company',principal,async(req,res,next)=>{try{if(!companies)return res.status(503).send('Definições indisponíveis.');res.json(await companies.get(req.user,undefined))}catch(e){next(e)}});
