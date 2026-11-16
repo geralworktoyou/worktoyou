@@ -1,7 +1,7 @@
 import {MongoClient} from 'mongodb';
-export async function connectMongo(uri){
+export async function connectMongo(uri,{MongoClientClass=MongoClient}={}){
  if(!uri)throw new Error('MONGODB_URI em falta.');
- const client=new MongoClient(uri);await client.connect();
+ const client=new MongoClientClass(uri);await client.connect();
  const db=client.db('worktoyou');
  try{
   await db.collection('users').createIndex({email:1},{unique:true,name:'unique_email'});
