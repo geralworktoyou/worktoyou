@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {hashPassword,verifyPassword} from './passwords.mjs';
+test('palavras-passe usam sal diferente e não são guardadas em texto',async()=>{const p='senha longa de teste';const a=await hashPassword(p),b=await hashPassword(p);assert.notEqual(a,b);assert.ok(!a.includes(p));assert.equal(await verifyPassword(p,a),true);assert.equal(await verifyPassword('senha errada',a),false)});
+test('rejeita palavras-passe curtas e hash malformado',async()=>{await assert.rejects(hashPassword('admin'));assert.equal(await verifyPassword('x','scrypt$!!$abc'),false);assert.equal(await verifyPassword('x','invalid'),false)});
