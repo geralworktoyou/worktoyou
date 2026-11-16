@@ -10,6 +10,7 @@ export function createOnlineSession(fetcher=fetch){
   login:async(email,password)=>request('/api/auth/login',{method:'POST',body:{email,password}}),
   current:async()=>request('/api/auth/me'),
   providers:async()=>request('/api/admin/providers'),
+  companySummary:async(tenantId)=>request('/api/admin/company-summary/'+encodeURIComponent(tenantId)),
   setProviderDisabled:async(id,disabled)=>request('/api/admin/providers/status',{method:'POST',body:{id,disabled}}),
   logout:async()=>request('/api/auth/logout',{method:'POST'})
  };
