@@ -6,7 +6,7 @@ import {AuthError} from './auth.mjs';
 import {AccessError} from './tenant-access.mjs';
 
 /** API experimental: deve ser executada apenas atrás de HTTPS e com proxy confiável. */
-export function makeApp({auth,records,media,origin,secureCookies=true}) {
+export function makeApp({auth,records,media,stock,origin,secureCookies=true}) {
  if(!auth||!origin)throw new Error('Configuração de autenticação e origem é obrigatória.');
  const app=express();app.disable('x-powered-by');app.set('trust proxy',1);
  app.use(helmet());app.use(express.json({limit:'32kb'}));
@@ -23,6 +23,7 @@ export function makeApp({auth,records,media,origin,secureCookies=true}) {
  app.get('/api/records',principal,async(req,res,next)=>{try{if(!records)return res.status(503).json({error:'Registos indisponíveis.'});const rows=await records.list(req.user,undefined);const assets=media?await media.list(req.user,undefined):[];const files=assets.map(a=>({id:a.id,kind:a.parentType==='faturas'?'fatura_pdf':'fotos',data:{[a.parentType==='faturas'?'faturaId':'ocorrenciaId']:a.parentId,nome:a.nome,localUrl:(a.parentType==='faturas'?'/api/invoice-pdfs?id=':'/api/photos?id=')+encodeURIComponent(a.id)},created:a.created}));res.json([...rows,...files].map(({id,kind,data,created})=>({id,kind,data:JSON.stringify(data),created})))}catch(e){next(e)}});
  // Escritas limitadas aos módulos já preparados; restantes exigem regras próprias.
  app.post('/api/records',checkOrigin,principal,async(req,res,next)=>{try{if(!records)return res.status(503).json({error:'Registos indisponíveis.'});const {id,kind,data}=req.body||{};if(!['clientes','ocorrencias','atividade'].includes(kind))return res.status(501).json({error:'Este módulo ainda não está disponível online.'});if(kind==='atividade'){if(typeof data?.ocorrenciaId!=='string'||!data.ocorrenciaId)return res.status(400).json({error:'Selecione uma ocorrência.'});await records.get(req.user,undefined,data.ocorrenciaId,'ocorrencias')}const result=id?await records.update(req.user,undefined,id,kind,data):await records.create(req.user,undefined,kind,data);res.json({id:result.id})}catch(e){next(e)}});
+ app.post('/api/quote-stock',checkOrigin,principal,async(req,res,next)=>{try{if(!stock)return res.status(503).json({error:'Stock indisponível.'});res.json(await stock.change(req.user,undefined,req.body?.id,req.body?.action))}catch(e){next(e)}});
  const upload=multer({storage:multer.memoryStorage(),limits:{fileSize:12*1024*1024,files:1,fields:4}});
  for(const [path,parentType,parentKey] of [['/api/photos','ocorrencias','ocorrenciaId'],['/api/invoice-pdfs','faturas','faturaId']]){
   app.post(path,checkOrigin,principal,upload.single('ficheiro'),async(req,res,next)=>{try{if(!media)return res.status(503).send('Ficheiros indisponíveis.');const result=await media.upload(req.user,undefined,{buffer:req.file?.buffer,parentType,parentId:req.body?.[parentKey],name:req.file?.originalname});res.json(result)}catch(e){next(e)}});
