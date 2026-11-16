@@ -11,6 +11,8 @@ export function createOnlineSession(fetcher=fetch){
   current:async()=>request('/api/auth/me'),
   providers:async()=>request('/api/admin/providers'),
   companySummary:async(tenantId)=>request('/api/admin/company-summary/'+encodeURIComponent(tenantId)),
+  setProviderRemoved:async(id,removed)=>request('/api/admin/providers/remove',{method:'POST',body:{id,removed}}),
+  resetProviderPassword:async(id,newPassword)=>request('/api/admin/providers/password',{method:'POST',body:{id,newPassword}}),
   setProviderDisabled:async(id,disabled)=>request('/api/admin/providers/status',{method:'POST',body:{id,disabled}}),
   logout:async()=>request('/api/auth/logout',{method:'POST'})
  };
