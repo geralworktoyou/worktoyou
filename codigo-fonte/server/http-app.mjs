@@ -32,6 +32,7 @@ export function makeApp({auth,records,companies,media,stock,payments,staff,origi
  app.delete('/api/staff/:id/holidays/:holidayId',checkOrigin,principal,staffHandler(req=>staff.removeHoliday(req.user,req.params.id,req.params.holidayId)));
  app.get('/api/employee/occurrences',principal,staffHandler(req=>staff.ownOccurrences(req.user)));
  app.get('/api/employee/clock',principal,staffHandler(req=>staff.ownClock(req.user)));
+ app.get('/api/employee/weather',principal,async(req,res)=>{if(req.user.role!=='staff')return res.status(403).json({error:'Acesso recusado.'});try{const response=await fetch('https://api.open-meteo.com/v1/forecast?latitude=37.7412&longitude=-25.6756&current=temperature_2m,weather_code&timezone=Atlantic%2FAzores',{signal:AbortSignal.timeout(5000)});if(!response.ok)throw Error('weather');const data=await response.json();const temperature=data?.current?.temperature_2m,code=data?.current?.weather_code;if(!Number.isFinite(temperature)||!Number.isFinite(code))throw Error('weather');res.set('Cache-Control','private, max-age=900');res.json({temperature,code,location:'Ponta Delgada'})}catch{res.status(503).json({error:'Meteorologia indisponível.'})}});
  app.post('/api/employee/clock',checkOrigin,principal,staffHandler(req=>staff.punch(req.user)));
  app.get('/api/staff/:id/messages',principal,staffHandler(req=>staff.conversation(req.user,req.params.id)));
  app.post('/api/staff/:id/messages',checkOrigin,principal,staffHandler(req=>staff.sendMessage(req.user,req.params.id,req.body||{})));
