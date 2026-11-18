@@ -8,7 +8,7 @@ import {AccessError} from './tenant-access.mjs';
 import {validateInvoiceLinks} from './financial.mjs';
 
 /** API experimental: deve ser executada apenas atrás de HTTPS e com proxy confiável. */
-export function makeApp({auth,records,companies,media,stock,payments,staff,origin,secureCookies=true,experimentalWebRoot}) {
+export function makeApp({auth,records,companies,media,stock,payments,staff,workforce,origin,secureCookies=true,experimentalWebRoot}) {
  if(!auth||!origin)throw new Error('Configuração de autenticação e origem é obrigatória.');
  const app=express();app.disable('x-powered-by');app.set('trust proxy',1);
  app.use(helmet({contentSecurityPolicy:{directives:{imgSrc:["'self'",'data:','https://res.cloudinary.com','https://api.cloudinary.com']}}}));app.use(express.json({limit:'32kb'}));
@@ -23,6 +23,14 @@ export function makeApp({auth,records,companies,media,stock,payments,staff,origi
  app.post('/api/auth/logout',checkOrigin,async(req,res,next)=>{try{await auth.logout(token(req));res.clearCookie('wt_session',options);res.status(204).end()}catch(e){next(e)}});
  async function principal(req,res,next){try{req.user=await auth.authenticate(token(req));next()}catch(e){next(e)}}
  const staffHandler = fn => async(req,res,next)=>{try{if(!staff)return res.status(503).json({error:'Módulo indisponível.'});res.set('Cache-Control','no-store');res.json(await fn(req))}catch(e){next(e)}};
+ const workforceHandler=fn=>async(req,res,next)=>{try{if(!workforce)return res.status(503).json({error:'Gestão da equipa indisponível.'});res.set('Cache-Control','no-store');res.json(await fn(req))}catch(e){next(e)}};
+ app.get('/api/workforce',principal,workforceHandler(req=>workforce.dashboard(req.user)));
+ app.get('/api/workforce/:id/history',principal,workforceHandler(req=>workforce.history(req.user,req.params.id)));
+ app.put('/api/workforce/:id/profile',checkOrigin,principal,workforceHandler(req=>workforce.profile(req.user,req.params.id,req.body||{})));
+ app.post('/api/workforce/vacation',checkOrigin,principal,workforceHandler(req=>workforce.assign(req.user,req.body||{})));
+ app.post('/api/workforce/requests/:id/decision',checkOrigin,principal,workforceHandler(req=>workforce.decide(req.user,req.params.id,req.body?.status)));
+ app.get('/api/employee/workforce',principal,workforceHandler(req=>workforce.own(req.user)));
+ app.post('/api/employee/requests',checkOrigin,principal,workforceHandler(req=>workforce.request(req.user,req.body||{})));
  app.get('/api/staff',principal,staffHandler(req=>staff.list(req.user)));
  app.post('/api/staff',checkOrigin,principal,staffHandler(req=>staff.create(req.user,req.body||{})));
  app.put('/api/staff/:id',checkOrigin,principal,staffHandler(req=>staff.update(req.user,req.params.id,req.body||{})));
