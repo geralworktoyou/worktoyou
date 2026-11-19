@@ -9,10 +9,19 @@
   "scripts": {
     "dev": "vite --config vite.local.config.mjs --host 127.0.0.1",
     "build": "vite build --config vite.local.config.mjs",
-    "test": "node test-local.mjs && node test-backup.mjs && node test-stock.mjs"
+    "test": "node test-local.mjs && node test-backup.mjs && node test-stock.mjs",
+    "start:api": "node server/start.mjs",
+    "test:server": "node --test server/*.test.mjs",
+    "build:online": "vite build --config vite.online.config.mjs"
   },
   "dependencies": {
+    "cloudinary": "^2.11.0",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.4",
+    "helmet": "^8.3.0",
     "lucide-react": "1.31.0",
+    "mongodb": "^7.9.0",
+    "multer": "^2.5.0",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },
